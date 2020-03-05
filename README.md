@@ -3,6 +3,8 @@
 
 ![](https://github.com/lgdcoder/TrianglePopView/blob/master/images/1.jpg)
 
+![](https://github.com/lgdcoder/TrianglePopView/blob/master/images/2.jpg)
+
 ```java
 <TrianglePopView
     android:id="@+id/vTrianglePop"
@@ -16,4 +18,15 @@
     app:stroke_width="0dp"
     app:triangle_offset="-40dp"
     app:triangle_width="12dp">
+```
+
+```java
+TrianglePopView vTrianglePop = v.findViewById(R.id.vTrianglePop);
+vTrianglePop.setDirection(TrianglePopView.Direction.LEFT)
+        .setPopCorner(10)
+        .setStrokeWidth(2)
+        .setSolidColor(Color.WHITE)
+        .setTriangleOffset(-10)
+        .setTriangleWidth(20)
+        .setStrokeColor(Color.BLUE);
 ```
