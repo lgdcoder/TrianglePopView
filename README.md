@@ -1,7 +1,7 @@
 # 
 带三角形的泡泡窗口
 
-
+![](https://github.com/lgdcoder/TrianglePopView/blob/master/images/1.jpg)
 
 ```java
 <TrianglePopView
