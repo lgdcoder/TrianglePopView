@@ -1,4 +1,4 @@
-package com.example.test;
+package com.example.demo;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -25,7 +25,7 @@ public class TrianglePopView extends FrameLayout {
     private Paint paint;
     private Path path;
 
-    private RectF rect, rectInner;
+    private RectF rect, connerRect;
 
     private float triangleWidth;
     private int corner;
@@ -87,8 +87,9 @@ public class TrianglePopView extends FrameLayout {
         paint.setAntiAlias(true);
 
         path = new Path();
+
         rect = new RectF();
-        rectInner = new RectF();
+        connerRect = new RectF();
 
         point1 = new PointF();
         point2 = new PointF();
@@ -161,27 +162,27 @@ public class TrianglePopView extends FrameLayout {
         switch (direction) {
             case LEFT:
                 centerY = getHeight() / 2;
-                point1.set(rect.left, centerY - triangleWidth / 2);
-                point2.set(0, centerY);
-                point3.set(rect.left, centerY + triangleWidth / 2);
+                point1.set(rect.left, centerY + triangleWidth / 2);
+                point2.set(strokeWidth / 2, centerY);
+                point3.set(rect.left, centerY - triangleWidth / 2);
                 break;
             case RIGHT:
                 centerY = getHeight() / 2;
                 point1.set(rect.right, centerY - triangleWidth / 2);
-                point2.set(getWidth(), centerY);
+                point2.set(getWidth() - strokeWidth / 2, centerY);
                 point3.set(rect.right, centerY + triangleWidth / 2);
                 break;
             case TOP:
                 centerX = getWidth() / 2;
                 point1.set(centerX - triangleWidth / 2, rect.top);
-                point2.set(centerX, 0);
+                point2.set(centerX, strokeWidth / 2);
                 point3.set(centerX + triangleWidth / 2, rect.top);
                 break;
             case BOTTOM:
                 centerX = getWidth() / 2;
-                point1.set(centerX - triangleWidth / 2, rect.bottom);
-                point2.set(centerX, getHeight());
-                point3.set(centerX + triangleWidth / 2, rect.bottom);
+                point1.set(centerX + triangleWidth / 2, rect.bottom);
+                point2.set(centerX, getHeight() - strokeWidth / 2);
+                point3.set(centerX - triangleWidth / 2, rect.bottom);
                 break;
         }
         calculateTriangleOffset();
@@ -208,36 +209,7 @@ public class TrianglePopView extends FrameLayout {
     }
 
     /**
-     * 根据三角形方向，计算【内边框】三角形三个点的实际位置
-     */
-    private void calculateStrokeTrianglePoint() {
-        float extraWidth = (float) Math.sqrt(2 * strokeWidth * strokeWidth); // 三角形的斜边长度
-        switch (direction) {
-            case LEFT:
-                point1.set(point1.x + extraWidth, point1.y);
-                point2.set(point2.x + extraWidth, point2.y);
-                point3.set(point3.x + extraWidth, point3.y);
-                break;
-            case RIGHT:
-                point1.set(point1.x - extraWidth, point1.y);
-                point2.set(point2.x - extraWidth, point2.y);
-                point3.set(point3.x - extraWidth, point3.y);
-                break;
-            case TOP:
-                point1.set(point1.x, point1.y + extraWidth);
-                point2.set(point2.x, point2.y + extraWidth);
-                point3.set(point3.x, point3.y + extraWidth);
-                break;
-            case BOTTOM:
-                point1.set(point1.x, point1.y - extraWidth);
-                point2.set(point2.x, point2.y - extraWidth);
-                point3.set(point3.x, point3.y - extraWidth);
-                break;
-        }
-    }
-
-    /**
-     * 根据三角形方向，构建【外边框】【内边框】矩形位置
+     * 根据三角形方向，构建边框
      */
     private void buildRectPosition() {
         switch (direction) {
@@ -267,35 +239,118 @@ public class TrianglePopView extends FrameLayout {
                 break;
         }
 
-        if (strokeWidth > 0)
-            rectInner.set(rect.left + strokeWidth, rect.top + strokeWidth, rect.right - strokeWidth, rect.bottom - strokeWidth);
+        if (strokeWidth > 0) {
+            rect.set(rect.left + strokeWidth, rect.top + strokeWidth, rect.right - strokeWidth, rect.bottom - strokeWidth);
+//            rectInner.set(rect.left + strokeWidth, rect.top + strokeWidth, rect.right - strokeWidth, rect.bottom - strokeWidth);
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        // 绘制外层背景
-        paint.setColor(strokeWidth > 0 ? strokeColor : color);
         calculateTrianglePoint();
-        path.reset();
-        path.addRoundRect(rect, corner, corner, getPathDirection());
+        arcToCorners();
+
+        drawFill(canvas);
+        if (strokeWidth > 0)
+            drawStroke(canvas);
+    }
+
+    /**
+     * 绘制边框部分
+     */
+    private void drawStroke(Canvas canvas) {
+        paint.setColor(strokeColor);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setStrokeWidth(strokeWidth);
+
+        canvas.drawPath(path, paint);
+    }
+
+    /**
+     * 绘制填充部分
+     */
+    private void drawFill(Canvas canvas) {
+        paint.setColor(color);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setAntiAlias(true);//抗锯齿
+        paint.setDither(true);//抖动
+        paint.setStrokeWidth(strokeWidth);
+
+        canvas.drawPath(path, paint);
+    }
+
+    private void arcToCorners() {
+        // 箭头路径
         path.moveTo(point1.x, point1.y);
         path.lineTo(point2.x, point2.y);
         path.lineTo(point3.x, point3.y);
-        path.close();
-        canvas.drawPath(path, paint);
-
-        if (strokeWidth > 0) { // 绘制内层背景
-            calculateStrokeTrianglePoint();
-            paint.setColor(color);
-            path.reset();
-            path.addRoundRect(rectInner, corner, corner, getPathDirection());
-            path.moveTo(point1.x, point1.y);
-            path.lineTo(point2.x, point2.y);
-            path.lineTo(point3.x, point3.y);
-            path.close();
-            canvas.drawPath(path, paint);
+        switch (direction) {
+            case LEFT:
+                arcToLeftTopCorner();
+                arcToRightTopCorner();
+                arcToRightBottomCorner();
+                arcToLeftBottomCorner();
+                break;
+            case RIGHT:
+                arcToRightBottomCorner();
+                arcToLeftBottomCorner();
+                arcToLeftTopCorner();
+                arcToRightTopCorner();
+                break;
+            case TOP:
+                arcToRightTopCorner();
+                arcToRightBottomCorner();
+                arcToLeftBottomCorner();
+                arcToLeftTopCorner();
+                break;
+            case BOTTOM:
+                arcToLeftBottomCorner();
+                arcToLeftTopCorner();
+                arcToRightTopCorner();
+                arcToRightBottomCorner();
+                break;
         }
+
+        path.close();
+    }
+
+    /**
+     * 绘制左上方圆角
+     */
+    private void arcToLeftTopCorner() {
+        path.lineTo(rect.left, rect.top + corner);
+        connerRect.set(rect.left, rect.top, rect.left + corner, rect.top + corner);
+        path.arcTo(connerRect, 180, 90);
+    }
+
+    /**
+     * 绘制左下方圆角
+     */
+    private void arcToLeftBottomCorner() {
+        path.lineTo(rect.left + corner, rect.bottom);
+        connerRect.set(rect.left, rect.bottom - corner, rect.left + corner, rect.bottom);
+        path.arcTo(connerRect, 90, 90);
+    }
+
+    /**
+     * 绘制右上方圆角
+     */
+    private void arcToRightTopCorner() {
+        path.lineTo(rect.right - corner, rect.top);
+        connerRect.set(rect.right - corner, rect.top, rect.right, rect.top + corner);
+        path.arcTo(connerRect, 270, 90);
+    }
+
+    /**
+     * 绘制右下方圆角
+     */
+    private void arcToRightBottomCorner() {
+        path.lineTo(rect.right, rect.bottom - corner);
+        connerRect.set(rect.right - corner, rect.bottom - corner, rect.right, rect.bottom);
+        path.arcTo(connerRect, 0, 90);
     }
 
     /**
