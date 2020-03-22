@@ -1,5 +1,5 @@
 # **[TrianglePopView](https://github.com/lgdcoder/TrianglePopView)**
-带三角形的泡泡控件，内部添加子控件，可以自定义三角形4个方向、圆角角度等属性
+带三角形的泡泡控件，内部添加子控件，支持自定义三角形4个方向、圆角角度、边框等属性
 
 ## 截图预览
 
